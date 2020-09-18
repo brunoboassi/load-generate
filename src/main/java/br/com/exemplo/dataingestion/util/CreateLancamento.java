@@ -4,6 +4,10 @@ import br.com.exemplo.dataingestion.adapters.events.entities.ContaEvent;
 import br.com.exemplo.dataingestion.adapters.events.entities.LancamentoEvent;
 import br.com.exemplo.dataingestion.domain.entities.Conta;
 import br.com.exemplo.dataingestion.domain.entities.Lancamento;
+import br.com.exemplo.dataingestion.domain.producer.ProducerService;
+import com.github.javafaker.Faker;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -12,12 +16,21 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Component
+@RequiredArgsConstructor
 public class CreateLancamento {
+
+    private final Faker faker;
+
     public  Lancamento create()
     {
+        Map<String,Object> map = new HashMap<>();
+        map.put("nome",faker.name().fullName());
+        map.put("estabelecimento",faker.company().name());
+        map.put("longitude",faker.address().longitude());
+        map.put("latitude",faker.address().latitude());
         return Lancamento.builder()
                 .codigoMoedaTransacao("986")
-                .codigoMotivoLancamento("123456")
+                .codigoMotivoLancamento(faker.number().digits(6))
                 .codigoTipoOperacao("TEF_CC_CC")
                 .conta(
                         Conta.builder()
@@ -28,18 +41,24 @@ public class CreateLancamento {
                 .dataContabilLancamento(OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
                 .dataLancamento(OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
                 .indicadorLancamentoCompulsorioOcorrencia("N")
-                .metadados(new ArrayList<>())
+                .metadados(map)
                 .numeroIdentificacaoLancamentoConta(UUID.randomUUID())
                 .siglaSistemaOrigem("X0")
-                .textoComplementoLancamento("Complemento")
+                .textoComplementoLancamento(faker.commerce().productName())
                 .valorLancamento(BigDecimal.valueOf(1000.00).toString())
                 .build();
     }
     public Lancamento createWithParameter(UUID numeroConta, double valor)
     {
+        Map<String,Object> map = new HashMap<>();
+        map.put("nome",faker.name().fullName());
+        map.put("estabelecimento",faker.company().name());
+        map.put("longitude",faker.address().longitude());
+        map.put("latitude",faker.address().latitude());
+        map.put("categoriaEstabelecimento",faker.commerce().department());
         return Lancamento.builder()
                 .codigoMoedaTransacao("986")
-                .codigoMotivoLancamento("123456")
+                .codigoMotivoLancamento(faker.number().digits(6))
                 .codigoTipoOperacao("TEF_CC_CC")
                 .conta(
                         Conta.builder()
@@ -50,33 +69,36 @@ public class CreateLancamento {
                 .dataContabilLancamento(OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
                 .dataLancamento(OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
                 .indicadorLancamentoCompulsorioOcorrencia("N")
-                .metadados(new ArrayList<>())
+                .metadados(map)
                 .numeroIdentificacaoLancamentoConta(UUID.randomUUID())
                 .siglaSistemaOrigem("X0")
-                .textoComplementoLancamento("Complemento")
+                .textoComplementoLancamento(faker.commerce().productName())
                 .valorLancamento(BigDecimal.valueOf(valor).toString())
                 .build();
     }
-    public List<Lancamento> createList(int quantidadeRegistros, int quantidadeContas)
+    public void createList(int quantidadeRegistros, int quantidadeContas, ProducerService producerService)
     {
-        List<ContaMassa> listConta = new ArrayList<>();
-        List<Lancamento> listLancamento = new ArrayList<>();
         Random random = new Random();
-        ContaMassa contaMassa = new ContaMassa();
-        for (int i=0;i<quantidadeContas;i++) {
-            contaMassa = new ContaMassa();
-            contaMassa.setAgencia(random.nextInt(9999));
-            contaMassa.setConta(random.nextInt(99999));
-            contaMassa.setDac(random.nextInt(9));
-            contaMassa.geraIdConta();
-            listConta.add(contaMassa);
-        }
-
         for (int j=0;j<quantidadeRegistros;j++) {
-           listLancamento.add(this.createWithParameter(listConta.get(random.nextInt(quantidadeContas)).getIdConta(),random.nextDouble()));
+            producerService.produce(this.createWithParameter(getIdConta(quantidadeContas),random.nextDouble()));
         }
-
-        return listLancamento;
+    }
+    private UUID getIdConta(int quantidadeContas)
+    {
+        Random random = new Random();
+        return UUID.nameUUIDFromBytes(new StringBuilder(
+                StringUtils.leftPad(
+                        String.valueOf(random.nextInt(quantidadeContas<10000?quantidadeContas:9999)),4, '0')
+                )
+                .append(
+                        StringUtils.leftPad(String.valueOf(random.nextInt(quantidadeContas<100000?quantidadeContas:99999)),7, '0')
+                )
+                .append(
+                        random.nextInt(9)
+                )
+                .toString()
+                .getBytes()
+        );
     }
 
 }

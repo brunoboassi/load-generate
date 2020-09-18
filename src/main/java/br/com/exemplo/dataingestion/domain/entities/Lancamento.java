@@ -3,6 +3,7 @@ package br.com.exemplo.dataingestion.domain.entities;
 import lombok.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Getter
@@ -23,5 +24,5 @@ public class Lancamento {
     private String dataContabilLancamento;
     private String dataLancamento;
     private Conta conta;
-    private List<String> metadados;
+    private Map<String,Object> metadados;
 }

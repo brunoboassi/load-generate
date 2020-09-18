@@ -4,6 +4,7 @@ import br.com.exemplo.dataingestion.domain.entities.Conta;
 import lombok.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Getter
@@ -24,5 +25,5 @@ public class LancamentoEvent {
     private String dataContabilLancamento;
     private String dataLancamento;
     private ContaEvent conta;
-    private List<String> metadados;
+    private Map<String,Object> metadados;
 }
