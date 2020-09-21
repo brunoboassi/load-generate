@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
 @Component
-@Scope(value = "prototype")
 public class ProducerServiceImpl implements ProducerService {
 
     @Value("${data.ingestion.producer.topic}")
