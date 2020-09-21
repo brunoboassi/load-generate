@@ -57,13 +57,13 @@ public class GenerateLoadController {
         }
     }
 
-    @GetMapping("/geraevento/{qtdConta}/{qtdReg}")
-    public ResponseEntity geraEvento(@PathVariable("qtdConta") int qtdConta,@PathVariable("qtdReg") int qtdReg)
+    @GetMapping("/geraevento/{qtdConta}/{qtdReg}/{qtdDias}")
+    public ResponseEntity geraEvento(@PathVariable("qtdConta") int qtdConta,@PathVariable("qtdReg") int qtdReg,@PathVariable("qtdDias") int qtdDias)
     {
         log.info("Iniciando criação de massa");
         AtomicInteger control = new AtomicInteger(0);
         Timer.Sample sample = Timer.start(simpleMeterRegistry);
-        List<Lancamento> list = createLancamento.createList(qtdReg, qtdConta);
+        List<Lancamento> list = createLancamento.createList(qtdReg, qtdConta,qtdDias);
         log.info("Massa finalizada, iniciando produção paralelizada");
             list.stream().forEach(lancamento -> {
                 executorService.execute(() -> {

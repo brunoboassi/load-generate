@@ -16,6 +16,8 @@ import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -64,7 +66,7 @@ public class CreateLancamento {
                 .valorLancamento(BigDecimal.valueOf(1000.00).toString())
                 .build();
     }
-    public Lancamento createWithParameter(UUID numeroConta, Random random)
+    public Lancamento createWithParameter(UUID numeroConta, Random random, int dias)
     {
         Map<String,Object> map = new HashMap<>();
         map.put("nome",faker.name().fullName());
@@ -82,7 +84,7 @@ public class CreateLancamento {
                                 .numeroUnicoConta(numeroConta)
                                 .build()
                 )
-                .dataContabilLancamento(OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                .dataContabilLancamento(OffsetDateTime.now().minus(random.nextInt(dias), ChronoUnit.DAYS ).format(DateTimeFormatter.ISO_DATE_TIME))
                 .dataLancamento(OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
                 .indicadorLancamentoCompulsorioOcorrencia(random.nextBoolean())
                 .metadados(map)
@@ -93,14 +95,14 @@ public class CreateLancamento {
                 .build();
     }
     @SneakyThrows
-    public List<Lancamento> createList(int quantidadeRegistros, int quantidadeContas)
+    public List<Lancamento> createList(int quantidadeRegistros, int quantidadeContas,int quantidadeDias)
     {
         List<Lancamento> list = new ArrayList<>();
         List<Future<Lancamento>> futures = new ArrayList<Future<Lancamento>>(numeroThreadsGeracaoMassa);
         Random random = new Random();
         for (int j=0;j<quantidadeRegistros;j++) {
             futures.add(executorService.submit(() -> {
-               return this.createWithParameter(getIdConta(quantidadeContas),random);
+               return this.createWithParameter(getIdConta(quantidadeContas),random,quantidadeDias);
             }));
         }
         for (Future<Lancamento> f : futures) {
