@@ -48,7 +48,7 @@ public class CreateLancamento {
                 .valorLancamento(BigDecimal.valueOf(1000.00).toString())
                 .build();
     }
-    public Lancamento createWithParameter(UUID numeroConta, double valor)
+    public Lancamento createWithParameter(UUID numeroConta, double valor, Random random)
     {
         Map<String,Object> map = new HashMap<>();
         map.put("nome",faker.name().fullName());
@@ -58,7 +58,7 @@ public class CreateLancamento {
         map.put("categoriaEstabelecimento",faker.commerce().department());
         return Lancamento.builder()
                 .codigoMoedaTransacao("986")
-                .codigoMotivoLancamento(faker.number().digits(6))
+                .codigoMotivoLancamento(String.valueOf(random.nextInt(999999)))
                 .codigoTipoOperacao("TEF_CC_CC")
                 .conta(
                         Conta.builder()
@@ -80,7 +80,7 @@ public class CreateLancamento {
     {
         Random random = new Random();
         for (int j=0;j<quantidadeRegistros;j++) {
-            producerService.produce(this.createWithParameter(getIdConta(quantidadeContas),random.nextDouble()));
+            producerService.produce(this.createWithParameter(getIdConta(quantidadeContas),random.nextDouble(),random));
         }
     }
     private UUID getIdConta(int quantidadeContas)
