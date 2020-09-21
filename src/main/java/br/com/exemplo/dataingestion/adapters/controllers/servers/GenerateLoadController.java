@@ -1,6 +1,7 @@
 package br.com.exemplo.dataingestion.adapters.controllers.servers;
 
 import br.com.exemplo.dataingestion.adapters.events.entities.DataLancamentoEvent;
+import br.com.exemplo.dataingestion.domain.entities.Lancamento;
 import br.com.exemplo.dataingestion.domain.producer.ProducerService;
 import br.com.exemplo.dataingestion.util.CreateLancamento;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -28,44 +29,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GenerateLoadController {
 
     private final CreateLancamento createLancamento;
-    private final ApplicationContext applicationContext;
-    private static final int NUMERO_THREADS=4;
-    private final ExecutorService executorService= Executors.newFixedThreadPool(NUMERO_THREADS);
-    private final List<ProducerService> producerServiceList;
+    private final ProducerService producerService;
     private final MeterRegistry simpleMeterRegistry;
 
-
-    @PostConstruct
-    public void constroiProducer()
-    {
-        for(int i=0;i<NUMERO_THREADS;i++)
-        {
-            producerServiceList.add(applicationContext.getBean(ProducerService.class));
-        }
-    }
 
     @GetMapping("/geraevento/{qtdConta}/{qtdReg}")
     public ResponseEntity geraEvento(@PathVariable("qtdConta") int qtdConta,@PathVariable("qtdReg") int qtdReg)
     {
-        AtomicInteger numeroItensThread = new AtomicInteger(qtdReg/NUMERO_THREADS);
-
-        for(int i =0; i<NUMERO_THREADS;i++)
+        Timer.Sample sample = Timer.start(simpleMeterRegistry);
+        List<Lancamento> list = createLancamento.createList(qtdReg, qtdConta);
+        list.stream().forEach(lancamento ->
         {
-            ProducerService producerService = producerServiceList.get(i);
-            if(i==NUMERO_THREADS-1)
-            {
-                numeroItensThread.addAndGet(qtdReg%NUMERO_THREADS);
-            }
-            executorService.execute(() -> {
-                Timer.Sample sample = Timer.start(simpleMeterRegistry);
-                createLancamento.createList(numeroItensThread.get(), qtdConta,producerService);
-                sample.stop(simpleMeterRegistry.timer("kafka.processamento","thread",String.valueOf(Thread.currentThread().getId())));
-            });
-        }
-
-
-
-
+            producerService.produce(lancamento);
+        });
+        sample.stop(simpleMeterRegistry.timer("kafka.processamento","thread",String.valueOf(Thread.currentThread().getId())));
         return ResponseEntity.ok().build();
     }
 }

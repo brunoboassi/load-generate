@@ -76,12 +76,14 @@ public class CreateLancamento {
                 .valorLancamento(BigDecimal.valueOf(valor).toString())
                 .build();
     }
-    public void createList(int quantidadeRegistros, int quantidadeContas, ProducerService producerService)
+    public List<Lancamento> createList(int quantidadeRegistros, int quantidadeContas)
     {
+        List<Lancamento> list = new ArrayList();
         Random random = new Random();
         for (int j=0;j<quantidadeRegistros;j++) {
-            producerService.produce(this.createWithParameter(getIdConta(quantidadeContas),random.nextDouble(),random));
+            list.add(this.createWithParameter(getIdConta(quantidadeContas),random.nextDouble(),random));
         }
+        return list;
     }
     private UUID getIdConta(int quantidadeContas)
     {
