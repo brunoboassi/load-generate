@@ -20,7 +20,7 @@ public class Lancamento {
     private String siglaSistemaOrigem;
     private String codigoMotivoLancamento;
     private String textoComplementoLancamento;
-    private String indicadorLancamentoCompulsorioOcorrencia;
+    private boolean indicadorLancamentoCompulsorioOcorrencia;
     private String dataContabilLancamento;
     private String dataLancamento;
     private Conta conta;
