@@ -7,19 +7,35 @@ import br.com.exemplo.dataingestion.domain.entities.Lancamento;
 import br.com.exemplo.dataingestion.domain.producer.ProducerService;
 import com.github.javafaker.Faker;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @Component
 @RequiredArgsConstructor
 public class CreateLancamento {
 
     private final Faker faker;
+
+    private ExecutorService executorService;
+
+    @Value("${processamento.threads.geracao.massa:10}")
+    private int numeroThreadsGeracaoMassa;
+
+    @PostConstruct
+    public void constroiExecutors() {
+        executorService= Executors.newFixedThreadPool(numeroThreadsGeracaoMassa);
+    }
 
     public  Lancamento create()
     {
@@ -48,7 +64,7 @@ public class CreateLancamento {
                 .valorLancamento(BigDecimal.valueOf(1000.00).toString())
                 .build();
     }
-    public Lancamento createWithParameter(UUID numeroConta, double valor, Random random)
+    public Lancamento createWithParameter(UUID numeroConta, Random random)
     {
         Map<String,Object> map = new HashMap<>();
         map.put("nome",faker.name().fullName());
@@ -73,15 +89,24 @@ public class CreateLancamento {
                 .numeroIdentificacaoLancamentoConta(UUID.randomUUID())
                 .siglaSistemaOrigem("X0")
                 .textoComplementoLancamento(faker.commerce().productName())
-                .valorLancamento(BigDecimal.valueOf(valor).toString())
+                .valorLancamento(BigDecimal.valueOf(random.nextDouble()).toString())
                 .build();
     }
-    public void createList(int quantidadeRegistros, int quantidadeContas, ProducerService producerService)
+    @SneakyThrows
+    public List<Lancamento> createList(int quantidadeRegistros, int quantidadeContas)
     {
+        List<Lancamento> list = new ArrayList<>();
+        List<Future<Lancamento>> futures = new ArrayList<Future<Lancamento>>(numeroThreadsGeracaoMassa);
         Random random = new Random();
         for (int j=0;j<quantidadeRegistros;j++) {
-            producerService.produce(this.createWithParameter(getIdConta(quantidadeContas),random.nextDouble(),random));
+            futures.add(executorService.submit(() -> {
+               return this.createWithParameter(getIdConta(quantidadeContas),random);
+            }));
         }
+        for (Future<Lancamento> f : futures) {
+            list.add(f.get()); // wait for a processor to complete
+        }
+        return list;
     }
     private UUID getIdConta(int quantidadeContas)
     {

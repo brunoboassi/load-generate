@@ -26,10 +26,10 @@ public class ProducerServiceImpl implements ProducerService {
     private final MeterRegistry simpleMeterRegistry;
     @Override
     public Lancamento produce(Lancamento lancamento) {
-        simpleMeterRegistry.counter("kafka.contador","type","producao").increment();
+        simpleMeterRegistry.counter("kafka.contador","type","producao","thread",String.valueOf(Thread.currentThread().getId())).increment();
         Timer.Sample sample = Timer.start(simpleMeterRegistry);
         ProducerRecord producerRecord = new ProducerRecord(producerTopic, lancamentoDataLancamentoEventEventMapper.convert(lancamento));
-        sample.stop(simpleMeterRegistry.timer("kafka.time","type","producao"));
+        sample.stop(simpleMeterRegistry.timer("kafka.time","type","producao","thread",String.valueOf(Thread.currentThread().getId())));
         kafkaTemplate.send(producerRecord);
         return lancamento;
     }

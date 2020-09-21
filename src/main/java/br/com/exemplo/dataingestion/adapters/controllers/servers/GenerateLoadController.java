@@ -1,11 +1,14 @@
 package br.com.exemplo.dataingestion.adapters.controllers.servers;
 
 import br.com.exemplo.dataingestion.adapters.events.entities.DataLancamentoEvent;
+import br.com.exemplo.dataingestion.domain.entities.Lancamento;
 import br.com.exemplo.dataingestion.domain.producer.ProducerService;
 import br.com.exemplo.dataingestion.util.CreateLancamento;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -15,31 +18,41 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PostConstruct;
+import java.applet.Applet;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 @RestController
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class GenerateLoadController {
 
     private final CreateLancamento createLancamento;
     private final ApplicationContext applicationContext;
-    private static final int NUMERO_THREADS=4;
-    private final ExecutorService executorService= Executors.newFixedThreadPool(NUMERO_THREADS);
+
+    private ExecutorService executorService;
     private final List<ProducerService> producerServiceList;
     private final MeterRegistry simpleMeterRegistry;
 
+    @Value("${processamento.threads.producao:10}")
+    private int numeroThreadsProducao;
 
     @PostConstruct
     public void constroiProducer()
     {
-        for(int i=0;i<NUMERO_THREADS;i++)
+        this.executorService = Executors.newFixedThreadPool(numeroThreadsProducao);
+        log.debug("Inicializando produtores");
+        for(int i=0;i<numeroThreadsProducao;i++)
         {
+
             producerServiceList.add(applicationContext.getBean(ProducerService.class));
         }
     }
@@ -47,25 +60,26 @@ public class GenerateLoadController {
     @GetMapping("/geraevento/{qtdConta}/{qtdReg}")
     public ResponseEntity geraEvento(@PathVariable("qtdConta") int qtdConta,@PathVariable("qtdReg") int qtdReg)
     {
-        AtomicInteger numeroItensThread = new AtomicInteger(qtdReg/NUMERO_THREADS);
-
-        for(int i =0; i<NUMERO_THREADS;i++)
-        {
-            ProducerService producerService = producerServiceList.get(i);
-            if(i==NUMERO_THREADS-1)
-            {
-                numeroItensThread.addAndGet(qtdReg%NUMERO_THREADS);
-            }
-            executorService.execute(() -> {
-                Timer.Sample sample = Timer.start(simpleMeterRegistry);
-                createLancamento.createList(numeroItensThread.get(), qtdConta,producerService);
-                sample.stop(simpleMeterRegistry.timer("kafka.processamento","thread",String.valueOf(Thread.currentThread().getId())));
+        log.info("Iniciando criação de massa");
+        AtomicInteger control = new AtomicInteger(0);
+        Timer.Sample sample = Timer.start(simpleMeterRegistry);
+        List<Lancamento> list = createLancamento.createList(qtdReg, qtdConta);
+        log.info("Massa finalizada, iniciando produção paralelizada");
+            list.stream().forEach(lancamento -> {
+                executorService.execute(() -> {
+                    producerServiceList.get(control.get()).produce(lancamento);
+                    if(control.get()<=numeroThreadsProducao-1)
+                    {
+                        control.set(0);
+                    }
+                    else
+                    {
+                        control.getAndIncrement();
+                    }
+                });
             });
-        }
-
-
-
-
+        sample.stop(simpleMeterRegistry.timer("kafka.processamento","thread",String.valueOf(Thread.currentThread().getId())));
+        log.info("Finalizado");
         return ResponseEntity.ok().build();
     }
 }
