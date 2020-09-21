@@ -19,7 +19,7 @@ public class LancamentoToEventMapperImpl implements EventMapper<Lancamento,DataL
                 .siglaSistemaOrigem(lancamento.getSiglaSistemaOrigem())
                 .numeroIdentificacaoLancamentoConta(lancamento.getNumeroIdentificacaoLancamentoConta())
                 .metadados(lancamento.getMetadados())
-                .indicadorLancamentoCompulsorioOcorrencia(lancamento.getIndicadorLancamentoCompulsorioOcorrencia())
+                .indicadorLancamentoCompulsorioOcorrencia(lancamento.isIndicadorLancamentoCompulsorioOcorrencia())
                 .dataLancamento(lancamento.getDataLancamento())
                 .dataContabilLancamento(lancamento.getDataContabilLancamento())
                 .conta(
