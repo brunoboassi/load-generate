@@ -2,6 +2,7 @@ package br.com.exemplo.dataingestion.util;
 
 import br.com.exemplo.dataingestion.adapters.events.entities.ContaEvent;
 import br.com.exemplo.dataingestion.adapters.events.entities.LancamentoEvent;
+import br.com.exemplo.dataingestion.adapters.events.entities.Location;
 import br.com.exemplo.dataingestion.domain.entities.Conta;
 import br.com.exemplo.dataingestion.domain.entities.Lancamento;
 import br.com.exemplo.dataingestion.domain.producer.ProducerService;
@@ -44,8 +45,7 @@ public class CreateLancamento {
         Map<String,Object> map = new HashMap<>();
         map.put("nome",faker.name().fullName());
         map.put("estabelecimento",faker.company().name());
-        map.put("longitude",faker.address().longitude());
-        map.put("latitude",faker.address().latitude());
+        map.put("location", Location.builder().lat(faker.address().latitude()).lon(faker.address().longitude()).build());
         return Lancamento.builder()
                 .codigoMoedaTransacao("986")
                 .codigoMotivoLancamento(faker.number().digits(6))
@@ -71,8 +71,7 @@ public class CreateLancamento {
         Map<String,Object> map = new HashMap<>();
         map.put("nome",faker.name().fullName());
         map.put("estabelecimento",faker.company().name());
-        map.put("longitude",faker.address().longitude());
-        map.put("latitude",faker.address().latitude());
+        map.put("location", Location.builder().lat(faker.address().latitude()).lon(faker.address().longitude()).build());
         map.put("categoriaEstabelecimento",faker.commerce().department());
         return Lancamento.builder()
                 .codigoMoedaTransacao("986")
