@@ -31,16 +31,29 @@ public class CreateLancamento {
     private final Faker faker;
 
     private ExecutorService executorService;
-
+    private List<String> lista = new ArrayList<>();
+    private  Random random = new Random();
     @Value("${processamento.threads.geracao.massa:10}")
     private int numeroThreadsGeracaoMassa;
 
     @PostConstruct
     public void constroiExecutors() {
-        executorService= Executors.newFixedThreadPool(numeroThreadsGeracaoMassa);
+
+        lista.add("Café");
+        lista.add("ALmoço");
+        lista.add("Árvore");
+        lista.add("Boné");
+        lista.add("paralelepipedo");
+        lista.add("Maçã");
+        lista.add("Coração");
+        lista.add("Itaú");
+        lista.add("paralelepipedo");
+        lista.add("McDonalds");
+        lista.add("Drogasil");
+
     }
 
-    public  Lancamento create()
+    public  Lancamento create123()
     {
         Map<String,Object> map = new HashMap<>();
         map.put("nome",faker.name().fullName());
@@ -89,42 +102,21 @@ public class CreateLancamento {
                 .metadados(map)
                 .numeroIdentificacaoLancamentoConta(UUID.randomUUID())
                 .siglaSistemaOrigem("X0")
-                .textoComplementoLancamento(faker.commerce().productName())
+                .textoComplementoLancamento(faker.commerce().productName()+" "+lista.get(random.nextInt(lista.size()-1)))
                 .valorLancamento(BigDecimal.valueOf(random.nextDouble()).toString())
                 .build();
     }
     @SneakyThrows
-    public List<Lancamento> createList(int quantidadeRegistros, int quantidadeContas,int quantidadeDias)
+    public void create(int quantidadeRegistros, int quantidadeContas,int quantidadeDias,ProducerService producerService)
     {
-        List<Lancamento> list = new ArrayList<>();
-        List<Future<Lancamento>> futures = new ArrayList<Future<Lancamento>>(numeroThreadsGeracaoMassa);
-        Random random = new Random();
-        for (int j=0;j<quantidadeRegistros;j++) {
-            futures.add(executorService.submit(() -> {
-               return this.createWithParameter(getIdConta(quantidadeContas),random,quantidadeDias);
-            }));
+        for(int i=0;i<quantidadeRegistros;i++) {
+            producerService.produce(this.createWithParameter(getIdConta(quantidadeContas), random, quantidadeDias));
         }
-        for (Future<Lancamento> f : futures) {
-            list.add(f.get()); // wait for a processor to complete
-        }
-        return list;
     }
-    private UUID getIdConta(int quantidadeContas)
+    public UUID getIdConta(int quantidadeContas)
     {
         Random random = new Random();
-        return UUID.nameUUIDFromBytes(new StringBuilder(
-                StringUtils.leftPad(
-                        String.valueOf(random.nextInt(quantidadeContas<10000?quantidadeContas:9999)),4, '0')
-                )
-                .append(
-                        StringUtils.leftPad(String.valueOf(random.nextInt(quantidadeContas<100000?quantidadeContas:99999)),7, '0')
-                )
-                .append(
-                        random.nextInt(9)
-                )
-                .toString()
-                .getBytes()
-        );
+        return UUID.nameUUIDFromBytes(StringUtils.leftPad(String.valueOf(random.nextInt(quantidadeContas)),12,'0').getBytes());
     }
 
 }

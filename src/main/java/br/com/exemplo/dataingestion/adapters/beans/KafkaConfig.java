@@ -13,6 +13,7 @@ import org.springframework.kafka.core.ProducerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Configuration
 public class KafkaConfig {
@@ -20,7 +21,7 @@ public class KafkaConfig {
     @Scope(value = "prototype")
     public KafkaTemplate<String, DataLancamentoEvent> kafkaTemplate1(ProducerFactory<String, DataLancamentoEvent> producerFactory){
         Map<String,String> map = new HashMap<>();
-        map.put(ProducerConfig.CLIENT_ID_CONFIG,String.valueOf(Thread.currentThread().getId()));
+        map.put(ProducerConfig.CLIENT_ID_CONFIG,UUID.randomUUID().toString());
         return new KafkaTemplate(producerFactory,false,map);
     }
 }

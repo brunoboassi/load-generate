@@ -29,7 +29,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-@RestController
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -52,34 +51,26 @@ public class GenerateLoadController {
         log.debug("Inicializando produtores");
         for(int i=0;i<numeroThreadsProducao;i++)
         {
-
             producerServiceList.add(applicationContext.getBean(ProducerService.class));
         }
     }
 
-    @GetMapping("/geraevento/{qtdConta}/{qtdReg}/{qtdDias}")
-    public ResponseEntity geraEvento(@PathVariable("qtdConta") int qtdConta,@PathVariable("qtdReg") int qtdReg,@PathVariable("qtdDias") int qtdDias)
+    public void geraEvento(@PathVariable("qtdConta") int qtdConta,@PathVariable("qtdReg") int qtdReg,@PathVariable("qtdDias") int qtdDias)
     {
-        log.info("Iniciando criação de massa");
-        AtomicInteger control = new AtomicInteger(0);
-        Timer.Sample sample = Timer.start(simpleMeterRegistry);
-        List<Lancamento> list = createLancamento.createList(qtdReg, qtdConta,qtdDias);
-        log.info("Massa finalizada, iniciando produção paralelizada");
-            list.stream().forEach(lancamento -> {
-                executorService.execute(() -> {
-                    producerServiceList.get(control.get()).produce(lancamento);
-                    if(control.get()<=numeroThreadsProducao-1)
-                    {
-                        control.set(0);
-                    }
-                    else
-                    {
-                        control.getAndIncrement();
-                    }
-                });
+        AtomicInteger numeroItensThread = new AtomicInteger(qtdReg/numeroThreadsProducao);
+
+        for(int i =0; i<numeroThreadsProducao;i++)
+        {
+            ProducerService producerService = producerServiceList.get(i);
+            if(i==numeroThreadsProducao-1)
+            {
+                numeroItensThread.addAndGet(qtdReg%numeroThreadsProducao);
+            }
+            executorService.execute(() -> {
+                log.info("Inicializando thread {} com {} registros",Thread.currentThread().getId(),numeroItensThread.get());
+                createLancamento.create(numeroItensThread.get(), qtdConta,qtdDias,producerService);
+                log.info("Finalizando Thread thread {} ",Thread.currentThread().getId(),numeroItensThread.get());
             });
-        sample.stop(simpleMeterRegistry.timer("kafka.processamento","thread",String.valueOf(Thread.currentThread().getId())));
-        log.info("Finalizado");
-        return ResponseEntity.ok().build();
+        }
     }
 }
