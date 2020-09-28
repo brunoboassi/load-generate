@@ -7,15 +7,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-
-import javax.annotation.PostConstruct;
-
 @SpringBootApplication
 @RequiredArgsConstructor
 @Slf4j
-public class LoadGenerateApplication {
+public class LoadGenerateApplication implements CommandLineRunner {
 
 	@Value("${registros.total:1000000}")
 	private int registro;
@@ -32,9 +27,8 @@ public class LoadGenerateApplication {
 		SpringApplication.run(LoadGenerateApplication.class, args);
 	}
 
-
-	@EventListener(ApplicationReadyEvent.class)
-	public void run() throws Exception {
+	@Override
+	public void run(String... args) throws Exception {
 		log.info("Iniciando a produção de {} com {} contas e com {} dias retroativos",registro,contas,dias);
 		generateLoadController.geraEvento(contas,registro,dias);
 		log.info("Liberando comando da aplicação");

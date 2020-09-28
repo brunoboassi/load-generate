@@ -1,33 +1,21 @@
 package br.com.exemplo.dataingestion.adapters.controllers.servers;
 
-import br.com.exemplo.dataingestion.adapters.events.entities.DataLancamentoEvent;
-import br.com.exemplo.dataingestion.domain.entities.Lancamento;
 import br.com.exemplo.dataingestion.domain.producer.ProducerService;
 import br.com.exemplo.dataingestion.util.CreateLancamento;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PostConstruct;
-import java.applet.Applet;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 
 @Component
 @RequiredArgsConstructor
@@ -55,7 +43,8 @@ public class GenerateLoadController {
         }
     }
 
-    public void geraEvento(@PathVariable("qtdConta") int qtdConta,@PathVariable("qtdReg") int qtdReg,@PathVariable("qtdDias") int qtdDias)
+    @SneakyThrows
+    public void geraEvento(int qtdConta, int qtdReg, int qtdDias)
     {
         AtomicInteger numeroItensThread = new AtomicInteger(qtdReg/numeroThreadsProducao);
 
@@ -72,5 +61,7 @@ public class GenerateLoadController {
                 log.info("Finalizando Thread thread {} ",Thread.currentThread().getId(),numeroItensThread.get());
             });
         }
+        executorService.shutdown();
+        executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
     }
 }
