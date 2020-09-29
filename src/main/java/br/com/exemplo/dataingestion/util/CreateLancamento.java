@@ -79,8 +79,10 @@ public class CreateLancamento {
                 .valorLancamento(BigDecimal.valueOf(1000.00).toString())
                 .build();
     }
-    public Lancamento createWithParameter(UUID numeroConta, Random random, int dias)
-    {
+
+
+    public Lancamento createByContaAndData(UUID idConta,int dias) {
+        String data = OffsetDateTime.now().minus(dias,ChronoUnit.DAYS).format(DateTimeFormatter.ISO_DATE_TIME);
         Map<String,Object> map = new HashMap<>();
         map.put("nome",faker.name().fullName());
         map.put("estabelecimento",faker.company().name());
@@ -93,11 +95,11 @@ public class CreateLancamento {
                 .conta(
                         Conta.builder()
                                 .codigoSufixoConta("100")
-                                .numeroUnicoConta(numeroConta)
+                                .numeroUnicoConta(idConta)
                                 .build()
                 )
-                .dataContabilLancamento(OffsetDateTime.now().minus(random.nextInt(dias), ChronoUnit.DAYS ).format(DateTimeFormatter.ISO_DATE_TIME))
-                .dataLancamento(OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                .dataContabilLancamento(data)
+                .dataLancamento(data)
                 .indicadorLancamentoCompulsorioOcorrencia(random.nextBoolean())
                 .metadados(map)
                 .numeroIdentificacaoLancamentoConta(UUID.randomUUID())
@@ -106,17 +108,4 @@ public class CreateLancamento {
                 .valorLancamento(BigDecimal.valueOf(random.nextDouble()).toString())
                 .build();
     }
-    @SneakyThrows
-    public void create(int quantidadeRegistros, int quantidadeContas,int quantidadeDias,ProducerService producerService)
-    {
-        for(int i=0;i<quantidadeRegistros;i++) {
-            producerService.produce(this.createWithParameter(getIdConta(quantidadeContas), random, quantidadeDias));
-        }
-    }
-    public UUID getIdConta(int quantidadeContas)
-    {
-        Random random = new Random();
-        return UUID.nameUUIDFromBytes(StringUtils.leftPad(String.valueOf(random.nextInt(quantidadeContas)),12,'0').getBytes());
-    }
-
 }

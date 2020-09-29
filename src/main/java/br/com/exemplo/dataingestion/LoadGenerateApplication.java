@@ -17,26 +17,8 @@ import javax.annotation.PostConstruct;
 @Slf4j
 public class LoadGenerateApplication {
 
-	@Value("${registros.total:1000000}")
-	private int registro;
-
-	@Value("${contas.total:1000}")
-	private int contas;
-
-	@Value("${dias.total:90}")
-	private int dias;
-
-	private final GenerateLoadController generateLoadController;
 
 	public static void main(String[] args) {
 		SpringApplication.run(LoadGenerateApplication.class, args);
-	}
-
-
-	@EventListener(ApplicationReadyEvent.class)
-	public void run() throws Exception {
-		log.info("Iniciando a produção de {} com {} contas e com {} dias retroativos",registro,contas,dias);
-		generateLoadController.geraEvento(contas,registro,dias);
-		log.info("Liberando comando da aplicação");
 	}
 }
