@@ -1,6 +1,7 @@
 package br.com.exemplo.dataingestion.adapters.beans;
 
 import br.com.exemplo.dataingestion.adapters.events.entities.DataLancamentoEvent;
+import br.com.exemplo.dataingestion.adapters.events.entities.LoadEntity;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +24,7 @@ public class KafkaConfig {
 
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(ConsumerFactory<String, Object> consumerFactory){
+    public ConcurrentKafkaListenerContainerFactory<String, LoadEntity> kafkaListenerContainerFactory(ConsumerFactory<String, LoadEntity> consumerFactory){
         ConcurrentKafkaListenerContainerFactory factory = new ConcurrentKafkaListenerContainerFactory();
         factory.setConsumerFactory(consumerFactory);
         factory.setConcurrency(concurrency);
