@@ -1,28 +1,27 @@
 package br.com.exemplo.dataingestion.util;
 
-import br.com.exemplo.dataingestion.adapters.events.entities.ContaEvent;
-import br.com.exemplo.dataingestion.adapters.events.entities.LancamentoEvent;
-import br.com.exemplo.dataingestion.adapters.events.entities.Location;
-import br.com.exemplo.dataingestion.domain.entities.Conta;
-import br.com.exemplo.dataingestion.domain.entities.Lancamento;
-import br.com.exemplo.dataingestion.domain.producer.ProducerService;
-import com.github.javafaker.Faker;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+
+import javax.annotation.PostConstruct;
+
+import com.github.javafaker.Faker;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import br.com.exemplo.dataingestion.adapters.events.entities.Location;
+import br.com.exemplo.dataingestion.domain.entities.Conta;
+import br.com.exemplo.dataingestion.domain.entities.Lancamento;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
@@ -30,7 +29,6 @@ public class CreateLancamento {
 
     private final Faker faker;
 
-    private ExecutorService executorService;
     private List<String> lista = new ArrayList<>();
     private  Random random = new Random();
     @Value("${processamento.threads.geracao.massa:10}")
@@ -88,7 +86,7 @@ public class CreateLancamento {
         map.put("estabelecimento",faker.company().name());
         map.put("location", Location.builder().lat(faker.address().latitude()).lon(faker.address().longitude()).build());
         map.put("categoriaEstabelecimento",faker.commerce().department());
-        return Lancamento.builder()
+        Lancamento lancamento = Lancamento.builder()
                 .codigoMoedaTransacao("986")
                 .codigoMotivoLancamento(String.valueOf(random.nextInt(999999)))
                 .codigoTipoOperacao("TEF_CC_CC")
@@ -107,5 +105,6 @@ public class CreateLancamento {
                 .textoComplementoLancamento(faker.commerce().productName()+" "+lista.get(random.nextInt(lista.size()-1)))
                 .valorLancamento(BigDecimal.valueOf(random.nextDouble()).toString())
                 .build();
+        return lancamento;
     }
 }
