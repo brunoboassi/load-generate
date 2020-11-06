@@ -1,7 +1,10 @@
 package br.com.exemplo.dataingestion.util;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -79,8 +82,17 @@ public class CreateLancamento {
     }
 
 
-    public Lancamento createByContaAndData(UUID idConta,int dias) {
-        String data = OffsetDateTime.now().minus(dias,ChronoUnit.DAYS).format(DateTimeFormatter.ISO_DATE_TIME);
+    public Lancamento createByContaAndData(UUID idConta, int dias, LocalDate dataFim) {
+        String data = OffsetDateTime.of(
+            dataFim,
+            LocalTime.MIDNIGHT, 
+            ZoneOffset.ofHours(-3)
+        ).minus(
+            dias,
+            ChronoUnit.DAYS
+        ).format(
+            DateTimeFormatter.ISO_DATE_TIME
+        );
         Map<String,Object> map = new HashMap<>();
         map.put("nome",faker.name().fullName());
         map.put("estabelecimento",faker.company().name());

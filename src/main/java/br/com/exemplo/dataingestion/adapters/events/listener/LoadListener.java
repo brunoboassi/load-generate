@@ -38,10 +38,10 @@ public class LoadListener {
 
     @KafkaHandler
     public void geraEvento(LoadEntity loadEntity) {
-        log.debug("will generate {} records for account {}", loadEntity.getQuantidadeDias(), loadEntity.getIdConta());
+        log.debug("will generate {} records for account {} starting at {}", loadEntity.getQuantidadeDias(), loadEntity.getIdConta(), loadEntity.getDataFim());
         Timer.Sample sample = Timer.start(Metrics.globalRegistry);
         for (int i = 0; i < loadEntity.getQuantidadeDias(); i++) {
-            producerService.produce(createLancamento.createByContaAndData(loadEntity.getIdConta(), i));
+            producerService.produce(createLancamento.createByContaAndData(loadEntity.getIdConta(), i, loadEntity.getDataFim()));
         }
 
         counter.increment();
