@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-generate
+  labels:
+    app: load-generate
+  namespace: load-generate
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: load-generate
+  template:
+    metadata:
+      labels:
+        app: load-generate
+    spec:
+      serviceAccountName: statement-demo
+      containers:
+      - name: load-generate
+        image: 837108680928.dkr.ecr.us-east-1.amazonaws.com/load-generate:latest
+        imagePullPolicy: Always
+        volumeMounts:
+        - mountPath: /tmp/application-aws.properties
+          name: config
+          subPath: application-aws.properties
+        resources:
+          limits:
+            memory: "3Gi"
+            cpu: 2
+          requests:
+            memory: "3Gi"
+            cpu: 2
+        env:
+        - name: JAVA_OPTS
+          value: "-XX:MaxRAMPercentage=90.0"
+        - name: KAFKA_BOOTSTRAP
+          valueFrom:
+            configMapKeyRef:
+              name: kafka
+              key: bootstrap
+        - name: KAFKA_GROUP_ID
+          value: "load-generate"
+        - name: KAFKA_MAX_POOL_RECORDS
+          value: "1"
+        - name: KAFKA_CONCURRENCY
+          value: "10"
+        - name: KAFKA_PRODUCER_TOPIC
+          value: "generate"
+        - name: KAFKA_CONSUMER_TOPIC
+          value: "load"
+        - name: CLOUDWATCH_NAMESPACE
+          value: "statement12"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+      volumes:
+      - configMap:
+          name: application.properties
+        name: config
